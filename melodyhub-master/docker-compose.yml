@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    # Check your be/.env for the actual PORT (e.g., 5000, 3000, 8080)
+    # The left side (9999) is the host port, right side is the container port.
+    ports:
+      - "9999:9999"
+    env_file:
+      - ./be/.env
+    environment:
+      - MONGO_URI=mongodb://host.docker.internal:27017
+      - PORT=9999
+    restart: unless-stopped
+    volumes:
+      - ./be/media:/app/media # To persist media if stored locally
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+    # Maps NGINX container port 80 to host port 3000
+    ports:
+      - "3000:80"
+    env_file:
+      - ./fe/.env
+    depends_on:
+      - backend
+    restart: unless-stopped
