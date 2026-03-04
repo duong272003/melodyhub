@@ -1,0 +1,13 @@
+--progress is a global compose flag, better use `docker compose --progress xx build ...
+time="2026-03-04T10:22:27+07:00" level=warning msg="C:\\Users\\DUONG\\Downloads\\melodyhub-master (2)\\melodyhub-master\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Image melodyhub-master-backend Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 617B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 513B done
+#2 DONE 0.1s
+
+#3 [internal] load metadata for docker.io/library/node:18-alpine
+
