@@ -68,7 +68,8 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.index({ username: 1 });
+// Removed duplicate index declaration since username has `unique: true` in schema
+// userSchema.index({ username: 1 });
 
 // Hash password trước khi lưu
 userSchema.pre('save', async function (next) {
