@@ -10,9 +10,9 @@ dotenv.config();
 // CONFIGURE YOUR SUPER ADMIN CREDENTIALS HERE
 // ======================================================
 const SUPER_ADMIN = {
-    email: 'admin@melodyhub.com',       // Change this to your email
-    password: 'Admin@123456',           // Change this to a strong password
-    username: 'superadmin',             // Change this to your preferred username
+    email: 'admin@gmail.com',       // Change this to your email
+    password: '123456',           // Change this to a strong password
+    username: 'superadminduong',             // Change this to your preferred username
     displayName: 'Super Admin',         // Change this to your display name
 };
 // ======================================================
