@@ -55,10 +55,14 @@ export const socketServer = (httpServer) => {
     },
   });
 
-  // Redis Adapter - only if REDIS_URL is provided
+  // Redis Adapter - only if REDIS_URL is provided AND explicitly enabled
   const redisUrl = process.env.REDIS_URL;
-  if (redisUrl && process.env.REDIS_ENABLED !== "false" && process.env.DISABLE_REDIS !== "true") {
-  const pubClient = createClient({
+  // TẠM TẮT REDIS ADAPTER ĐỂ FIX LỖI DROP TIN NHẮN CHAT (Do Redis trên Render hay bị sleep/timeout)
+  // Chỉ bật lại khi server cần chạy nhiều instance (scale out)
+  const USE_REDIS = false;
+
+  if (USE_REDIS && redisUrl && process.env.REDIS_ENABLED !== "false" && process.env.DISABLE_REDIS !== "true") {
+    const pubClient = createClient({
       url: redisUrl,
       socket: {
         reconnectStrategy: (retries) => {
@@ -70,18 +74,18 @@ export const socketServer = (httpServer) => {
         },
         connectTimeout: 5000,
       },
-  });
-  const subClient = pubClient.duplicate();
-    
-  Promise.all([pubClient.connect(), subClient.connect()])
-    .then(() => {
-      io.adapter(createAdapter(pubClient, subClient));
-      console.log("[Socket.IO] Đã kết nối Redis Adapter thành công");
-    })
-    .catch((err) => {
+    });
+    const subClient = pubClient.duplicate();
+
+    Promise.all([pubClient.connect(), subClient.connect()])
+      .then(() => {
+        io.adapter(createAdapter(pubClient, subClient));
+        console.log("[Socket.IO] Đã kết nối Redis Adapter thành công");
+      })
+      .catch((err) => {
         console.error("[Socket.IO] Lỗi kết nối Redis Adapter:", err.message);
         console.log("[Socket.IO] Tiếp tục chạy KHÔNG có Redis Adapter (single-server mode)");
-    });
+      });
   } else {
     console.log("[Socket.IO] Redis Adapter disabled hoặc không có REDIS_URL");
     console.log("[Socket.IO] Chạy ở single-server mode (không hỗ trợ horizontal scaling)");
@@ -159,7 +163,7 @@ export const socketServer = (httpServer) => {
       if (!tempUserId) {
         return socket.emit('chat-error', 'Xác thực không hợp lệ.');
       }
-      
+
       try {
         const room = await LiveRoom.findById(roomId);
         if (!room) {
@@ -170,7 +174,7 @@ export const socketServer = (httpServer) => {
         if (!user) {
           return socket.emit('chat-error', 'Người dùng không tồn tại.');
         }
-        
+
         // Check xem user có bị ban chat bởi host của phòng này không
         if (user.chatBannedByHosts && user.chatBannedByHosts.length > 0) {
           const isBannedByHost = user.chatBannedByHosts.some(
@@ -180,14 +184,14 @@ export const socketServer = (httpServer) => {
             return socket.emit('chat-error', 'Bạn đã bị cấm chat trong các phòng livestream của host này.');
           }
         }
-        
+
         const chat = new RoomChat({
           roomId,
-          userId: tempUserId, 
+          userId: tempUserId,
           message,
           messageType: 'text'
         });
-        
+
         const savedChat = await chat.save();
         const result = await RoomChat.findById(savedChat._id).populate('userId', 'displayName avatarUrl');
         io.to(roomId).emit('new-message-liveroom', result);
@@ -405,7 +409,7 @@ export const socketServer = (httpServer) => {
         // Include currentVersion so client can sync immediately and avoid version gaps
         const confirmationPayload = { projectId, userId, version: currentVersion };
         socket.emit("project:joined", confirmationPayload);
-        
+
         console.log(
           `[Socket.IO] Socket ${socket.id} ${isRejoin ? 'REJOINED' : 'joined'} project room project:${projectId}, socket.data set, confirmation emitted:`,
           confirmationPayload
@@ -499,7 +503,7 @@ export const socketServer = (httpServer) => {
           hasUserId: !!userId,
         }
       );
-      
+
       if (!projectId || !userId) {
         console.warn(
           `[Socket.IO] ⚠️ project:action rejected - socket.data not set:`,
@@ -577,7 +581,7 @@ export const socketServer = (httpServer) => {
             socketId: socket.id,
           }
         );
-        
+
         socket
           .to(`project:${projectId}`)
           .emit("project:update", broadcastPayload);
@@ -665,7 +669,7 @@ export const socketServer = (httpServer) => {
           });
         }
       }
-      
+
       // Clear socket.data when leaving project to prevent stale state
       // This ensures clean state when user joins a different project or rejoins
       if (socket.data.projectId === projectId) {
@@ -860,7 +864,7 @@ export const socketServer = (httpServer) => {
             console.error("[Socket.IO] presence cleanup error:", err)
           );
       }
-      
+
       // Clear socket.data to prevent stale state on reconnect
       // New socket connection will need to join project again
       socket.data.projectId = null;
