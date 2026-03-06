@@ -45,16 +45,25 @@ export default function useDMConversationMessages(conversationId) {
   const send = useCallback(async (text) => {
     if (!conversationId || !text?.trim()) return;
     const s = getSocket();
+
+    // Fallback immediately to REST if socket is dead instead of silent drops
     if (s && s.connected) {
-      // Dùng socket: server sẽ emit dm:new cho cả hai phía → không gọi REST để tránh tạo trùng
+      console.log('[DM] Sending via socket:', text);
       dmSend(conversationId, text.trim());
       return;
     }
-    // Không có socket: dùng REST và append ngay
+
+    console.warn('[DM] Socket not connected, falling back to REST API for send.');
     try {
       const saved = await dm.sendMessage(conversationId, text.trim());
-      setMessages((prev) => [...prev, saved]);
-    } catch {}
+      // Handle the new message locally immediately since socket won't broadcast back to sender if disconnected
+      setMessages((prev) => {
+        const exists = prev.some((m) => String(m._id) === String(saved._id));
+        return exists ? prev : [...prev, saved];
+      });
+    } catch (err) {
+      console.error('[DM] REST SEND ERROR:', err);
+    }
   }, [conversationId]);
 
   const typing = useMemo(() => ({
