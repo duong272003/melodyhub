@@ -2,7 +2,7 @@ import express from 'express';
 import axios from 'axios';
 
 const router = express.Router();
-const BASE_URL = 'https://esgoo.net/api-tinhthanh';
+const BASE_URL = 'https://esgoo.net/api-tinhthanh-new';
 
 router.get('/provinces', async (req, res) => {
   try {

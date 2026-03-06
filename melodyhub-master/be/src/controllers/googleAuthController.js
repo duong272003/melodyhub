@@ -30,7 +30,7 @@ export const findOrCreateUser = async (profile) => {
     if (!user) {
       // Check if user exists with this email but no Google ID
       user = await User.findOne({ email: profile.email });
-      
+
       if (user) {
         // If user exists with email but no Google ID, update with Google ID
         if (!user.googleId) {
@@ -73,12 +73,12 @@ export const findOrCreateUser = async (profile) => {
 async function generateUniqueUsername(baseUsername) {
   let username = baseUsername;
   let counter = 1;
-  
+
   while (await User.exists({ username })) {
     username = `${baseUsername}${counter}`;
     counter++;
   }
-  
+
   return username;
 }
 
@@ -86,20 +86,20 @@ async function generateUniqueUsername(baseUsername) {
 export const googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
-    
+
     if (!token) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing Google token' 
+      return res.status(400).json({
+        success: false,
+        message: 'Missing Google token'
       });
     }
 
     // Verify Google token
     const profile = await verifyIdToken(token);
     if (!profile) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid Google token' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid Google token'
       });
     }
 
@@ -126,11 +126,11 @@ export const googleLogin = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/'
     };
-    
+
     if (process.env.NODE_ENV === 'production' && process.env.COOKIE_DOMAIN) {
       googleCookieOptions.domain = process.env.COOKIE_DOMAIN;
     }
-    
+
     res.cookie('refreshToken', refreshToken, googleCookieOptions);
 
     // Return user data and access token
@@ -142,14 +142,14 @@ export const googleLogin = async (req, res) => {
       avatarUrl: normalizeAvatarUrl(user.avatarUrl),
       roleId: user.roleId,
       verifiedEmail: user.verifiedEmail,
-      isActive: user.isActive, 
+      isActive: user.isActive,
     };
 
     return res.status(200).json({
       success: true,
       message: 'Login successful',
       token: accessToken,
-      refreshToken: refreshToken, 
+      refreshToken: refreshToken,
       user: userData,
     });
   } catch (error) {
