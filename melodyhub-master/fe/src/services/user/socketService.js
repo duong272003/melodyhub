@@ -2,19 +2,20 @@ import { io } from "socket.io-client";
 import { store } from "../../redux/store";
 // URL của server (cổng Express/Socket.IO)
 const SOCKET_URL =
-  process.env.REACT_APP_SOCKET_URL || "";
+  process.env.REACT_APP_SOCKET_URL ||
+  (process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.split(',')[0] : "http://localhost:9999");
 
 let socket;
 let currentSocketUserId = null; // Track which user the socket belongs to
 
 export const initSocket = (explicitUserId) => {
   const userId = explicitUserId || store.getState().auth.user?.user?.id;
-  
+
   // If socket already exists and connected with same userId, reuse it
   if (socket && socket.connected && currentSocketUserId === userId) {
     return socket;
   }
-  
+
   // If socket exists but for different user or disconnected, clean up first
   if (socket) {
     // Only disconnect if switching users or socket is in bad state
@@ -27,7 +28,7 @@ export const initSocket = (explicitUserId) => {
       return socket;
     }
   }
-  
+
   if (userId) {
     currentSocketUserId = userId;
     socket = io(SOCKET_URL, {
@@ -49,9 +50,9 @@ export const initSocket = (explicitUserId) => {
       console.error("[Socket.IO] connect_error", err?.message);
     });
 
-    socket.on("disconnect", () => {});
+    socket.on("disconnect", () => { });
   }
-  
+
   return socket;
 };
 
