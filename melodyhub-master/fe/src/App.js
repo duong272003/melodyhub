@@ -7,6 +7,7 @@ import { store, persistor } from './redux/store';
 import AppRoutes from './routes/appRoutes';
 import { PersistGate } from 'redux-persist/integration/react';
 import TokenManager from './components/TokenManager';
+import { Analytics } from '@vercel/analytics/react';
 
 const App = () => (
   <Provider store={store}>
@@ -14,6 +15,7 @@ const App = () => (
       <TokenManager>
         <ConfigProvider theme={{ token: { colorPrimary: '#1890ff' } }}>
           <AppRoutes />
+          <Analytics />
         </ConfigProvider>
       </TokenManager>
     </PersistGate>
