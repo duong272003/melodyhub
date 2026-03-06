@@ -20,20 +20,19 @@ let currentSocketUserId = null; // Track which user the socket belongs to
 export const initSocket = (explicitUserId) => {
   const userId = explicitUserId || store.getState().auth.user?.user?.id;
 
-  // If socket already exists and connected with same userId, reuse it
-  if (socket && socket.connected && currentSocketUserId === userId) {
-    return socket;
-  }
-
-  // If socket exists but for different user or disconnected, clean up first
+  // If socket exists but for different user, clean up first
   if (socket) {
-    // Only disconnect if switching users or socket is in bad state
-    if (currentSocketUserId !== userId || !socket.connected) {
+    if (currentSocketUserId !== userId) {
       socket.disconnect();
       socket = null;
       currentSocketUserId = null;
     } else {
-      // Socket exists, same user, just not connected yet - let it continue connecting
+      // Socket exists and belongs to the same user.
+      // Dù nó connected hay không, cứ tái sử dụng. Socket.io sẽ tự động auto-reconnect.
+      // Tuyệt đối không huỷ socket tạo lại vì sẽ làm đứt (orphan) các listeners (như dm:new) đã bind vào object cũ.
+      if (!socket.connected) {
+        socket.connect();
+      }
       return socket;
     }
   }
