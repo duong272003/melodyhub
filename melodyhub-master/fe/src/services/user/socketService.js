@@ -1,9 +1,18 @@
 import { io } from "socket.io-client";
 import { store } from "../../redux/store";
 // URL của server (cổng Express/Socket.IO)
-const SOCKET_URL =
-  process.env.REACT_APP_SOCKET_URL ||
-  (process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.split(',')[0] : "http://localhost:9999");
+const getValidSocketUrl = () => {
+  if (process.env.REACT_APP_SOCKET_URL) return process.env.REACT_APP_SOCKET_URL;
+  if (!process.env.REACT_APP_API_URL) return "http://localhost:9999";
+  try {
+    const apiUrl = process.env.REACT_APP_API_URL.split(',')[0];
+    const parsed = new URL(apiUrl);
+    return parsed.origin; // Retains just 'https://example.com' without '/api'
+  } catch (e) {
+    return "http://localhost:9999";
+  }
+};
+const SOCKET_URL = getValidSocketUrl();
 
 let socket;
 let currentSocketUserId = null; // Track which user the socket belongs to
