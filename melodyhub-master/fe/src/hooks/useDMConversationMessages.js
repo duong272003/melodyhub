@@ -44,25 +44,20 @@ export default function useDMConversationMessages(conversationId) {
 
   const send = useCallback(async (text) => {
     if (!conversationId || !text?.trim()) return;
-    const s = getSocket();
 
-    // Fallback immediately to REST if socket is dead instead of silent drops
-    if (s && s.connected) {
-      console.log('[DM] Sending via socket:', text);
-      dmSend(conversationId, text.trim());
-      return;
-    }
-
-    console.warn('[DM] Socket not connected, falling back to REST API for send.');
+    // Luôn ưu tiên dùng REST API để gửi tin nhắn thay vì Socket Emit.
+    // Việc này đảm bảo tin nhắn được lưu vào Database cứng trước,
+    // Trả về đúng mã ID của tin nhắn để hiển thị ngay lập tức lên màn hình cho người gửi (Optimistic UI),
+    // Loại bỏ mọi rủi ro mất tin nhắn do rớt mạng Socket.
     try {
-      const saved = await dm.sendMessage(conversationId, text.trim());
-      // Handle the new message locally immediately since socket won't broadcast back to sender if disconnected
+      const savedMsg = await dm.sendMessage(conversationId, text.trim());
+      // Hiển thị ngay lên màn hình người gửi
       setMessages((prev) => {
-        const exists = prev.some((m) => String(m._id) === String(saved._id));
-        return exists ? prev : [...prev, saved];
+        const exists = prev.some((m) => String(m._id) === String(savedMsg._id));
+        return exists ? prev : [...prev, savedMsg];
       });
     } catch (err) {
-      console.error('[DM] REST SEND ERROR:', err);
+      console.error('[DM] Lỗi khi gửi tin nhắn qua REST API:', err);
     }
   }, [conversationId]);
 
